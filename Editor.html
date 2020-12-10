@@ -1,0 +1,1283 @@
+﻿
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ar" dir="rtl">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script
+    src="https://code.jquery.com/jquery-3.5.1.min.js"
+    integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+    crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.rtl.min.css" integrity="sha384-mUkCBeyHPdg0tqB6JDd+65Gpw5h/l8DKcCTV2D2UpaMMFd7Jo8A+mDAosaWgFBPl" crossorigin="anonymous">
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+
+
+    <style>
+        #editor {
+            text-align: right;
+            font-size: 48px;
+            border-color: lightgray;
+            border-style: solid;
+            border-width: 1px;
+            padding: 4px;
+            min-height: 400px;
+        }
+
+        #trandiv {
+            text-align: right;
+            font-family: Alvi Nastaleeq;
+            font-size: 24px;
+            font-weight: bold;
+            border-color: lightgray;
+            border-style: solid;
+            border-width: 1px;
+            padding: 4px;
+            min-height: 200px;
+        }
+    </style>
+    <title></title>
+
+
+
+
+    <script>
+        var doc;
+        var doc_tran;
+        function LoadMushaf(mushafname, targetid, callback, istran) {
+
+            var xhr = new XMLHttpRequest();
+
+            xhr.open("Get", mushafname, true);
+
+            xhr.onload = function (res) {
+                if (xhr.response != null && xhr.response != "") {
+                    var xmlDoc = jQuery.parseXML(xhr.response);
+
+                    //doc = xmlDoc.documentElement;
+                    //var docnodes = doc.children;
+
+                    var ayat = xmlDoc.documentElement.children[0].children[0].getAttribute('text');;
+
+                    var editor = document.getElementById(targetid);
+
+                    editor.innerHTML = ayat;
+
+                    if (callback) {
+                        callback(xmlDoc.documentElement);
+                    }
+
+                }
+            }
+            xhr.send(null);
+
+        }
+        function load() {
+            LoadMushaf("quran-simple.xml", "editor", function (de) {
+                doc = de;
+                FillAyaNumbers(1);
+            });
+            LoadMushaf("ur.junagarhi.xml", "trandiv", function (de) {
+                doc_tran = de;
+            });
+
+            var ayat = "قَالُوا سُبْحَانَكَ لَا عِلْمَ لَنَا إِلَّا مَا عَلَّمْتَنَا إِنَّكَ أَنْتَ الْعَلِيمُ الْحَكِيمُ";
+
+            var editor = document.getElementById("editor");
+
+            editor.innerHTML = ayat;
+
+
+        }
+
+        //function getSelectionCharOffsetsWithin(element) {
+        //    var start = 0, end = 0;
+        //    var sel, range, priorRange;
+        //    if (typeof window.getSelection != "undefined") {
+        //        range = window.getSelection().getRangeAt(0);
+        //        priorRange = range.cloneRange();
+        //        priorRange.selectNodeContents(element);
+        //        priorRange.setEnd(range.startContainer, range.startOffset);
+        //        start = priorRange.toString().length;
+        //        end = start + range.toString().length;
+        //    } else if (typeof document.selection != "undefined" &&
+        //            (sel = document.selection).type != "Control") {
+        //        range = sel.createRange();
+        //        priorRange = document.body.createTextRange();
+        //        priorRange.moveToElementText(element);
+        //        priorRange.setEndPoint("EndToStart", range);
+        //        start = priorRange.text.length;
+        //        end = start + range.text.length;
+        //    }
+        //    return {
+        //        start: start,
+        //        end: end
+        //    };
+        //}
+
+        var cntrlIsPressed = false;
+
+        $(document).keydown(function (event) {
+            if (event.which == "17")
+                cntrlIsPressed = true;
+
+            if (cntrlIsPressed && event.which == "90") {
+                Undo();
+            }
+            else if (cntrlIsPressed && event.which == "89") {
+                Redo();
+            }
+        });
+
+        $(document).keyup(function (event) {
+            if (event.which == "17")
+                cntrlIsPressed = false;
+        });
+
+        var previousText = "";
+        var NextText = "";
+
+        function Undo() {
+            var editor = document.getElementById("editor");
+
+            if (previousText != "") {
+                NextText = editor.innerHTML;
+                editor.innerHTML = previousText;
+
+            }
+        }
+
+        function Redo() {
+            var editor = document.getElementById("editor");
+
+            if (NextText != "") {
+                editor.innerHTML = NextText;
+            }
+        }
+
+
+        function gta2(sn,an, d, targetid) {
+            var editor = document.getElementById(targetid);
+
+
+            var surahNode = d.children[sn];
+            var ayahNode = surahNode.children[an];
+            editor.innerHTML = ayahNode.getAttribute('text');
+
+        }
+        function gta(obj)
+        {
+
+            var v = obj.value;
+
+            var varr = v.split(':');
+
+            var sn = varr[0];
+
+            var an = varr[1];
+             
+            gta2(sn-1, an-1, doc, 'editor');
+            gta2(sn-1, an-1, doc_tran, 'trandiv');
+        }
+
+        function GotoAyah(an, d, targetid) {
+            var docnodes = d.childNodes;
+
+            var editor = document.getElementById(targetid);
+            var sn = document.getElementById("opsurah").value - 1;
+
+            var surahNode = d.children[sn];
+            var ayahNode = surahNode.children[an.value];
+            editor.innerHTML = ayahNode.getAttribute('text');
+        }
+
+        function FillAyaNumbers(sn) {
+            var optayatnum = document.getElementById('ayatNumbers');
+            var docnodes = doc.children;
+
+            var totalLength = 0;
+
+            for (var i = 0; i < doc.childElementCount; i++) {
+
+                if (doc.children[i].getAttribute('index') == sn) {
+                    var surahNode = doc.children[i];
+                    totalLength = surahNode.childElementCount;
+                    break;
+                }
+            }
+
+            optayatnum.innerHTML = "";
+
+            for (var i = 0; i < totalLength; i++) {
+                var el = document.createElement("option");
+                el.value = i;
+                el.textContent = i + 1;
+
+                optayatnum.appendChild(el);
+            }
+        }
+
+        function LoadSurah(opt, targetid, fillayah, d) {
+
+            var optSurah = opt.value;
+            var docnodes = d.children;
+
+            var editor = document.getElementById(targetid);
+
+            for (var i = 0; i < d.childElementCount; i++) {
+                if (d.children[i].getAttribute('index') == optSurah) {
+                    var surahNode = d.children[i];
+                    var ayahNode = surahNode.children[0];
+                    editor.innerHTML = ayahNode.getAttribute('text');
+                }
+            }
+            if (fillayah && fillayah == true)
+                FillAyaNumbers(optSurah);
+        }
+
+        function fsp(tid, v) {
+            var editor = $('#' + tid);
+
+            newFontSize = parseInt(editor.css('font-size')) + eval(v);
+            $(editor).css('font-size', newFontSize);
+        }
+
+        function cc(color) {
+            var editor = document.getElementById("editor");
+            previousText = editor.innerHTML;
+
+            var nNd = document.createElement("span");
+            nNd.style = "color: " + color;
+            window.getSelection().getRangeAt(0).surroundContents(nNd);
+            nNd.innerHTML += cntrlIsPressed ? "" : "&zwj;";
+
+            window.getSelection().getRangeAt(0).startContainer.textContent += "\u200D";
+
+        }
+
+        function search(tb) {
+
+            var optayatnum = document.getElementById('slist');
+            optayatnum.innerHTML = "";
+            var rc = 0;
+            for (var i = 0; i < doc.childElementCount; i++) {
+
+                var surah = doc.children[i];
+                for (var j = 0; j < doc.children[i].childElementCount; j++) {
+                    var ayah = doc.children[i].children[j];
+
+                    if (ayah.getAttribute('text')) {
+                        var s = ayah.getAttribute('text').search($('#' + tb).val());
+
+                        if (s && s > -1) {
+                            
+                            var ayahtext = ayah.getAttribute('text');
+
+                            var el = document.createElement("option");
+                            el.value = surah.getAttribute('index') + ":" + ayah.getAttribute('index');
+                            el.textContent = ayahtext;
+
+                            optayatnum.appendChild(el);
+                            rc++;
+                            
+                        }
+                    }
+                }
+            }
+
+
+            $('#rc').text(rc);
+        }
+
+    </script>
+</head>
+<body onload="load()">
+    <div class="container">
+        <div class="row">
+            <div class="btn-toolbar" role="toolbar" aria-label="...">
+                <div class="btn-group" role="group" aria-label="...">
+
+                    <button type="button" class="btn btn-lg">حفظ</button>
+
+                    <button type="button" onclick="Undo();" class="btn btn-lg">فك</button>
+
+                    <button type="button" onclick="Redo();" class="btn btn-lg">فعل ثانية</button>
+                </div>
+            </div>
+            <div class="btn-toolbar" role="toolbar" aria-label="...">
+                <div class="btn-group" role="group" aria-label="...">
+                    <div class="btn-group" role="group">
+                        <h2>
+                            جز
+                            <select class="btn-lg">
+                                <option value="value">1. الم</option>
+                                <option value="value">2. سَيَقُولُ</option>
+                            </select>
+                        </h2>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <h2>
+                            &nbsp; سورة
+                            <select class="btn-lg" id="opsurah" onchange="LoadSurah(this, 'editor', true, doc); LoadSurah(this, 'trandiv',false, doc_tran)">
+
+                                <option value="1">1. الفاتحة</option>
+                                <option value="2">2. البقرة</option>
+                                <option value="3">3. آل عمران</option>
+                                <option value="4">4. النساء</option>
+                                <option value="5">5. المائدة</option>
+                                <option value="6">6. الأنعام</option>
+                                <option value="7">7. الأعراف</option>
+                                <option value="8">8. الأنفال</option>
+                                <option value="9">9. التوبة</option>
+                                <option value="10">10. يونس</option>
+                                <option value="11">11. هود</option>
+                                <option value="12">12. يوسف</option>
+                                <option value="13">13. الرعد</option>
+                                <option value="14">14. ابراهيم</option>
+                                <option value="15">15. الحجر</option>
+                                <option value="16">16. النحل</option>
+                                <option value="17">17. الإسراء</option>
+                                <option value="18">18. الكهف</option>
+                                <option value="19">19. مريم</option>
+                                <option value="20">20. طه</option>
+                                <option value="21">21. الأنبياء</option>
+                                <option value="22">22. الحج</option>
+                                <option value="23">23. المؤمنون</option>
+                                <option value="24">24. النور</option>
+                                <option value="25">25. الفرقان</option>
+                                <option value="26">26. الشعراء</option>
+                                <option value="27">27. النمل</option>
+                                <option value="28">28. القصص</option>
+                                <option value="29">29. العنكبوت</option>
+                                <option value="30">30. الروم</option>
+                                <option value="31">31. لقمان</option>
+                                <option value="32">32. السجدة</option>
+                                <option value="33">33. الأحزاب</option>
+                                <option value="34">34. سبإ</option>
+                                <option value="35">35. فاطر</option>
+                                <option value="36">36. يس</option>
+                                <option value="37">37. الصافات</option>
+                                <option value="38">38. ص</option>
+                                <option value="39">39. الزمر</option>
+                                <option value="40">40. غافر</option>
+                                <option value="41">41. فصلت</option>
+                                <option value="42">42. الشورى</option>
+                                <option value="43">43. الزخرف</option>
+                                <option value="44">44. الدخان</option>
+                                <option value="45">45. الجاثية</option>
+                                <option value="46">46. الأحقاف</option>
+                                <option value="47">47. محمد</option>
+                                <option value="48">48. الفتح</option>
+                                <option value="49">49. الحجرات</option>
+                                <option value="50">50. ق</option>
+                                <option value="51">51. الذاريات</option>
+                                <option value="52">52. الطور</option>
+                                <option value="53">53. النجم</option>
+                                <option value="54">54. القمر</option>
+                                <option value="55">55. الرحمن</option>
+                                <option value="56">56. الواقعة</option>
+                                <option value="57">57. الحديد</option>
+                                <option value="58">58. المجادلة</option>
+                                <option value="59">59. الحشر</option>
+                                <option value="60">60. الممتحنة</option>
+                                <option value="61">61. الصف</option>
+                                <option value="62">62. الجمعة</option>
+                                <option value="63">63. المنافقون</option>
+                                <option value="64">64. التغابن</option>
+                                <option value="65">65. الطلاق</option>
+                                <option value="66">66. التحريم</option>
+                                <option value="67">67. الملك</option>
+                                <option value="68">68. القلم</option>
+                                <option value="69">69. الحاقة</option>
+                                <option value="70">70. المعارج</option>
+                                <option value="71">71. نوح</option>
+                                <option value="72">72. الجن</option>
+                                <option value="73">73. المزمل</option>
+                                <option value="74">74. المدثر</option>
+                                <option value="75">75. القيامة</option>
+                                <option value="76">76. الانسان</option>
+                                <option value="77">77. المرسلات</option>
+                                <option value="78">78. النبإ</option>
+                                <option value="79">79. النازعات</option>
+                                <option value="80">80. عبس</option>
+                                <option value="81">81. التكوير</option>
+                                <option value="82">82. الإنفطار</option>
+                                <option value="83">83. المطففين</option>
+                                <option value="84">84. الإنشقاق</option>
+                                <option value="85">85. البروج</option>
+                                <option value="86">86. الطارق</option>
+                                <option value="87">87. الأعلى</option>
+                                <option value="88">88. الغاشية</option>
+                                <option value="89">89. الفجر</option>
+                                <option value="90">90. البلد</option>
+                                <option value="91">91. الشمس</option>
+                                <option value="92">92. الليل</option>
+                                <option value="93">93. الضحى</option>
+                                <option value="94">94. الشرح</option>
+                                <option value="95">95. التين</option>
+                                <option value="96">96. العلق</option>
+                                <option value="97">97. القدر</option>
+                                <option value="98">98. البينة</option>
+                                <option value="99">99. الزلزلة</option>
+                                <option value="100">100. العاديات</option>
+                                <option value="101">101. القارعة</option>
+                                <option value="102">102. التكاثر</option>
+                                <option value="103">103. العصر</option>
+                                <option value="104">104. الهمزة</option>
+                                <option value="105">105. الفيل</option>
+                                <option value="106">106. قريش</option>
+                                <option value="107">107. الماعون</option>
+                                <option value="108">108. الكوثر</option>
+                                <option value="109">109. الكافرون</option>
+                                <option value="110">110. النصر</option>
+                                <option value="111">111. المسد</option>
+                                <option value="112">112. الإخلاص</option>
+                                <option value="113">113. الفلق</option>
+                                <option value="114">114. الناس</option>
+                            </select>
+                        </h2>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <h2>
+                            &nbsp; آية<select id="ayatNumbers" onchange="GotoAyah(this, doc, 'editor'); GotoAyah(this, doc_tran, 'trandiv')" class="btn-lg"></select>
+                        </h2>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-2">
+
+                        <div role="group" class="btn-group">
+                            <input type="text" id="txtsearch" style="max-width:130px" value="" />
+                           
+                            <input type="button" id="btnsearch" onclick="search('txtsearch')" value="بحث" />
+                            <span>النتائج&nbsp;<span id="rc"></span></span>
+                        </div>
+                        <br />
+                        <select multiple onchange="gta(this);" style="min-height:372px; min-width:174px; max-height:372px; max-width:174px" id="slist">                            
+                        </select>
+                    </div>
+                    <div class="col-lg-10">
+
+
+                        <div class="row">
+
+                            <div class="col-lg-11">
+                                <div id="editor" dir="ltr" contenteditable="true">
+
+                                </div>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="button" name="name" class="btn btn-primary" value="+" onclick="fsp('editor',2)" /><br />
+
+                                <input type="button" name="name" style="min-width:34px" class="btn btn-primary" value="-"
+                                       onclick="fsp('editor',-2)" />
+                            </div>
+
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-11">
+                                <div id="trandiv" dir="ltr" contenteditable="true">
+
+                                </div>
+                            </div>
+                            <div class="col-lg-1">
+                                <input type="button" name="name" class="btn btn-primary" value="+" onclick="fsp('trandiv',2)" /><br />
+
+                                <input type="button" name="name" style="min-width:34px" class="btn btn-primary" onclick="fsp('trandiv',-2)" value="-" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-12">
+
+
+                                <button id="btncc" class="btn btn-lg"
+                                        style="background-color:red; color:white" onclick="cc('red')">
+                                    قلقله
+                                </button>
+                                <button id="btncc" class="btn btn-lg"
+                                        style="background-color:green; color:white" onclick="cc('green')">
+                                    تفخيم
+                                </button>
+                                <button id="btncc" class="btn btn-lg"
+                                        style="background-color:BLUE; color:white" onclick="cc('Blue')">
+                                    اخفاء
+                                </button>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+    <!--<script>
+        var branah = {};
+
+        branah.util = {
+            mobile: /Android|webOS|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent),
+            keyCode: function (b) {
+                if (!b) {
+                    var b = window.event
+                }
+                if ($.browser.mozilla) {
+                    var a = b.keyCode;
+                    switch (a) {
+                        case 59: a = 186; break;
+                        case 107: a = 187; break;
+                        case 109: a = 189; break;
+                        case 61: a = 187; break;
+                        case 173: a = 189; break
+                    } return a
+                }
+                if ($.browser.opera) {
+                    var a = b.keyCode;
+                    switch (a) {
+                        case 59: a = 186; break;
+                        case 61: a = 187; break;
+                        case 109: a = 189; break
+                    }
+                    return a
+                }
+                return b.keyCode
+            },
+            isCtrl: function (a) {
+                if (!a) {
+                    var a = window.event
+                }
+                return a.ctrlKey
+            },
+            isAlt: function (a) {
+                if (!a) {
+                    var a = window.event
+                }
+                return a.altKey
+            },
+            isShift: function (a) {
+                if (!a) {
+                    var a = window.event
+                }
+                return a.shiftKey
+            },
+            insertAtCaret: function (a, f) {
+                if (a.readOnly) {
+                    var g = $("#" + a.id).val();
+                    $("#" + a.id).val(g + f)
+                }
+                else {
+                    var d = this.getSelectionStart(a);
+                    var b = this.getSelectionEnd(a);
+                    var c = a.value.length;
+                    a.value = a.value.substring(0, d) + f + a.value.substring(b, c);
+                    this.setCaretPosition(a, d + f.length, 0)
+                }
+            },
+            deleteAtCaret: function (c, b, a) {
+                if (c.readOnly) {
+                    var i = $("#" + c.id).val();
+                    $("#" + c.id).val(i.substring(0, i.length - b));
+                    return i.substr(i.length - b)
+                }
+                var g = this.getSelectionStart(c);
+                var d = this.getSelectionEnd(c);
+                var f = c.value.length;
+                if (b > g) { b = g }
+                if (d + a > f) { a = f - d }
+                var h = c.value.substring(g - b, d + a);
+                c.value = c.value.substring(0, g - b) +
+                    c.value.substring(d + a);
+                this.setCaretPosition(c, g - b, 0); return h
+            },
+            getSelectionStart: function (a) {
+                a.focus();
+                if (a.selectionStart !== undefined) {
+                    return a.selectionStart
+                }
+                else {
+                    if (document.selection) {
+                        var b = document.selection.createRange();
+                        if (b == null) {
+                            return 0
+                        }
+                        var d = a.createTextRange();
+                        var c = d.duplicate();
+                        d.moveToBookmark(b.getBookmark());
+                        c.setEndPoint("EndToStart", d);
+                        return c.text.length
+                    }
+                } return 0
+            },
+            getSelectionEnd: function (a) {
+                a.focus();
+                if (a.selectionEnd !== undefined) {
+                    return a.selectionEnd
+                }
+                else {
+                    if (document.selection) {
+                        var b = document.selection.createRange();
+                        if (b == null) {
+                            return 0
+                        }
+                        var d = a.createTextRange();
+                        var c = d.duplicate();
+                        d.moveToBookmark(b.getBookmark());
+                        c.setEndPoint("EndToStart", d);
+                        return c.text.length + b.text.length
+                    }
+                }
+                return a.value.length
+            },
+            setCaretPosition: function (b, d, a) {
+                var c = b.value.length;
+                if (d > c) {
+                    d = c
+                }
+                if (d + a > c) {
+                    a = c - a
+                }
+                b.focus();
+                if (b.setSelectionRange) {
+                    b.setSelectionRange(d, d + a)
+                } else {
+                    if (b.createTextRange) {
+                        var f = b.createTextRange();
+                        f.collapse(true);
+                        f.moveEnd("character", d + a);
+                        f.moveStart("character", d);
+                        f.select()
+                    }
+                }
+                b.focus()
+            },
+            selectAll: function (a) {
+                this.setCaretPosition(a, 0, a.value.length)
+            }
+        };
+        branah.layout = function () {
+            this.keys = [];
+            this.deadkeys = [];
+            this.dir = "ltr";
+            this.name = "US";
+            this.lang = "en"
+        };
+
+        branah.layout.prototype.loadDefault = function () {
+            this.keys = [{ i: "k0", c: "0", n: "`", s: "~" }, { i: "k1", c: "0", n: "1", s: "!" }, { i: "k2", c: "0", n: "2", s: "@" }, { i: "k3", c: "0", n: "3", s: "#" }, { i: "k4", c: "0", n: "4", s: "$" }, { i: "k5", c: "0", n: "5", s: "%" }, { i: "k6", c: "0", n: "6", s: "^" }, { i: "k7", c: "0", n: "7", s: "&" }, { i: "k8", c: "0", n: "8", s: "*" }, { i: "k9", c: "0", n: "9", s: "(" }, { i: "k10", c: "0", n: "0", s: ")" }, { i: "k11", c: "0", n: "-", s: "_" }, { i: "k12", c: "0", n: "=", s: "+" }, { i: "k13", c: "1", n: "q", s: "Q" }, { i: "k14", c: "1", n: "w", s: "W" }, { i: "k15", c: "1", n: "e", s: "E" }, { i: "k16", c: "1", n: "r", s: "R" }, { i: "k17", c: "1", n: "t", s: "T" }, { i: "k18", c: "1", n: "y", s: "Y" }, { i: "k19", c: "1", n: "u", s: "U" }, { i: "k20", c: "1", n: "i", s: "I" }, { i: "k21", c: "1", n: "o", s: "O" }, { i: "k22", c: "1", n: "p", s: "P" }, { i: "k23", c: "0", n: "[", s: "{" }, { i: "k24", c: "0", n: "]", s: "}" }, { i: "k25", c: "0", n: "\\", s: "|" }, { i: "k26", c: "1", n: "a", s: "A" }, { i: "k27", c: "1", n: "s", s: "S" }, { i: "k28", c: "1", n: "d", s: "D" }, { i: "k29", c: "1", n: "f", s: "F" }, { i: "k30", c: "1", n: "g", s: "G" }, { i: "k31", c: "1", n: "h", s: "H" }, { i: "k32", c: "1", n: "j", s: "J" }, { i: "k33", c: "1", n: "k", s: "K" }, { i: "k34", c: "1", n: "l", s: "L" }, { i: "k35", c: "0", n: ";", s: ":" }, { i: "k36", c: "0", n: "'", s: '"' }, { i: "k37", c: "1", n: "z", s: "Z" }, { i: "k38", c: "1", n: "x", s: "X" }, { i: "k39", c: "1", n: "c", s: "C" }, { i: "k40", c: "1", n: "v", s: "V" }, { i: "k41", c: "1", n: "b", s: "B" }, { i: "k42", c: "1", n: "n", s: "N" }, { i: "k43", c: "1", n: "m", s: "M" }, { i: "k44", c: "0", n: ",", s: "<" }, { i: "k45", c: "0", n: ".", s: ">" }, { i: "k46", c: "0", n: "/", s: "?" }, { i: "k47", c: "0", n: "\\", s: "|" }];
+            this.dir = "ltr";
+            this.name = "US";
+            this.lang = "en"
+        };
+        branah.layout.prototype.load = function (a) {
+            this.keys = a.keys;
+            this.deadkeys = a.deadkeys;
+            this.dir = a.dir;
+            this.name = a.name;
+            this.lang = a.lang ? a.lang : "en"
+        };
+        branah.layout.parser =
+            {
+                keyCodes: [192, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187, 81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 219, 221, 220, 65, 83, 68, 70, 71, 72, 74, 75, 76, 186, 222, 90, 88, 67, 86, 66, 78, 77, 188, 190, 191, 220],
+                getKeyCode: function (c, e, b) {
+                    var d = c.length;
+                    for (var a = 0; a < d; a++) {
+                        if (c[a].i == b) {
+                            return e == 1 ? (c[a].s ? c[a].s : "") : (c[a].n ? c[a].n : "")
+                        }
+                    } return 0
+                },
+                getKey: function (c, b) {
+                    var d = c.length;
+                    for (var a = 0; a < d; a++) {
+                        if (c[a].i == b) {
+                            return c[a]
+                        }
+                    } return null
+                },
+                isDeadkey: function (a, d) {
+                    if (!a) {
+                        return false
+                    }
+                    var c = a.length;
+                    for (var b = 0; b < c; b++) {
+                        if (a[b].k == d) {
+                            return true
+                        }
+                    } return false
+                },
+                getMappedValue: function (a, e, d) {
+                    if (!a) { return "" }
+                    var c = a.length;
+                    for (var b = 0; b < c; b++) {
+                        if (a[b].k == d && a[b].b == e) {
+                            return a[b].c
+                        }
+                    } return ""
+                },
+                getKeyId: function (b) {
+                    for (var a = 0; a < 48; a++) {
+                        if (this.keyCodes[a] == b) {
+                            return a
+                        }
+                    } return -1
+                },
+                getState: function (d, a, e, b, c) {
+                    var f = "n";
+                    if (!a && !e && d) {
+                        f = "n"
+                    }
+                    else
+                    {
+                        if (!a && e && !d)
+                        {
+                            f = "s"
+                        }
+                        else
+                        {
+                            if (!a && e && d)
+                            {
+                                f = "s"
+                            }
+                            else
+                            {
+                                if (a && !e && !d)
+                                {
+                                    f = "n"
+                                }
+                                else
+                                {
+                                    if (a && !e && d)
+                                    {
+                                        f = "t"
+                                    }
+                                    else
+                                    {
+                                        if (a && e && !d) {
+                                            f = "s"
+                                        }
+                                        else
+                                        {
+                                            if (a && e && d)
+                                            {
+                                                f = "f"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } if ((f == "n" || f == "s") && b) {
+                        if (c == "1") {
+                            if (f == "n") {
+                                f = "s"
+                            }
+                            else { f = "n" }
+                        } if (c == "SGCap") {
+                            if (f == "n") {
+                                f = "y"
+                            } else {
+                                if (f == "s") {
+                                    f = "z"
+                                }
+                            }
+                        }
+                    } return f
+                }
+            };
+        branah.keyboard = function (a, d) {
+            this.defaultLayout = new branah.layout();
+            this.defaultLayout.loadDefault();
+            this.virtualLayout = new branah.layout();
+            this.virtualLayout.loadDefault();
+            this.currentLayout = this.virtualLayout;
+            this.shift = false;
+            this.shiftOn = false;
+            this.caps = false;
+            this.capsOn = false;
+            this.alt = false;
+            this.ctrl = false;
+            this.altCtrlOn = false;
+            this.fontSize = 18;
+            this.counter = 0;
+            this.interval = 0;
+            this.prev = "";
+            this.cancelkeypress = false;
+            this.customOnBackspace = function (e) { };
+            this.customOnEnter = function () { };
+            this.customOnSpace = function () { return false };
+            this.customOnKey = function (e) { return false };
+            this.customOnEsc = function () { };
+            this.customDrawKeyboard = function (e) { return e };
+            this.textbox = $("#" + d);
+            this.nativeTextbox = document.getElementById(d);
+            if (branah.util.mobile) {
+                this.nativeTextbox.readOnly = true
+            }
+            var c = ['<div id="branah-keyboard">'];
+            if ($(window).width() < 640) {
+                for (var b = 13; b < 23; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                for (var b = 26; b < 35; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                for (var b = 37; b < 44; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                c.push('<button id="branah-left-shift"><span>Shift</span></button>');
+                c.push('<button id="branah-caps-lock"><span>Caps</span></button>');
+                c.push('<button id="branah-escape" title="Turn on/off keyboard input conversion"><span>Esc</span></button>');
+                c.push('<button id="branah-space"><span>Space</span></button>');
+                c.push('<button id="branah-enter" class="branah-enter"><span>Enter</span></button>');
+                c.push('<button id="branah-left-ctrl"><span>Ctrl+Alt</span></button>');
+                c.push('<button id="branah-left-alt" style="display:none"><span>Alt</span></button>');
+                c.push('<button id="branah-backspace"><span>Back</span></button>');
+                for (var b = 0; b < 13; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                for (var b = 23; b < 26; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                for (var b = 35; b < 37; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                for (var b = 44; b < 48; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                c.push('<div class="branah-clear"></div>')
+            }
+            else {
+                for (var b = 0; b < 13; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                c.push('<button id="branah-backspace"><span>Backspace</span></button>');
+                c.push('<div class="branah-clear"></div>');
+                c.push('<button id="branah-tab"><span>Tab</span></button>');
+                for (var b = 13; b < 25; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                c.push('<button id="branah-k25"></button>');
+                c.push('<div class="branah-clear"></div>');
+                c.push('<button id="branah-caps-lock"><span>Caps Lock</span></button>');
+                for (var b = 26; b < 37; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                }
+                c.push('<button id="branah-enter" class="branah-enter"><span>Enter</span></button>');
+                c.push('<div class="branah-clear"></div>');
+                c.push('<button id="branah-left-shift"><span>Shift</span></button>');
+                c.push('<button id="branah-k47" class="branah-key"></button>');
+                for (var b = 37; b < 47; b++) {
+                    c.push('<button id="branah-k', b, '" class="branah-key"></button>')
+                } c.push('<button id="branah-right-shift"><span>Shift</span></button>');
+                c.push('<div class="branah-clear"></div>');
+                c.push('<button id="branah-left-ctrl"><span>Ctrl</span></button>');
+                c.push('<button id="branah"><span>branah</span></button>');
+                c.push('<button id="branah-left-alt"><span>Alt</span></button>');
+                c.push('<button id="branah-space"><span>Space</span></button>');
+                c.push('<button id="branah-right-alt"><span>Alt</span></button>');
+                c.push('<button id="branah-escape" title="Turn on/off keyboard input conversion"><span>Esc</span></button>');
+                c.push('<button id="branah-right-ctrl"><span>Ctrl</span></button>'); c.push('<div class="branah-clear"></div>')
+            } c.push("</div>"); document.getElementById(a).innerHTML = c.join(""); this.wireEvents(); this.drawKeyboard()
+        };
+        branah.keyboard.prototype.loadDefaultLayout = function (a) {
+            this.defaultLayout.load(a);
+            this.drawKeyboard()
+        };
+        branah.keyboard.prototype.loadVirtualLayout = function (a) {
+            this.virtualLayout.load(a);
+            this.drawKeyboard();
+            this.textbox.attr("dir", this.attr("dir"))
+        };
+        branah.keyboard.prototype.switchLayout = function () {
+            this.currentLayout = (this.currentLayout === this.defaultLayout) ? this.virtualLayout : this.defaultLayout;
+            this.reset();
+            this.drawKeyboard();
+            this.textbox.attr("dir", this.attr("dir"))
+        };
+        branah.keyboard.prototype.onEsc = function () {
+            this.switchLayout();
+            this.customOnEsc()
+        };
+        branah.keyboard.prototype.onShift = function () {
+            this.shift = !this.shift;
+            this.drawKeyboard()
+        };
+        branah.keyboard.prototype.onAlt = function () {
+            this.alt = !this.alt;
+            this.drawKeyboard()
+        };
+        branah.keyboard.prototype.onCtrl = function () {
+            this.ctrl = !this.ctrl;
+            this.drawKeyboard()
+        };
+        branah.keyboard.prototype.onCapsLock = function () {
+            this.caps = !this.caps;
+            this.drawKeyboard()
+        };
+        branah.keyboard.prototype.onBackspace = function () {
+            if (this.prev != "") {
+                this.prev = "";
+                this.shift = false;
+                this.drawKeyboard()
+            } else {
+                var a = branah.util.deleteAtCaret(this.nativeTextbox, 1, 0);
+                this.customOnBackspace(a)
+            }
+        };
+        branah.keyboard.prototype.onEnter = function () {
+            branah.util.insertAtCaret(this.nativeTextbox, "\u000A");
+            this.customOnEnter()
+        };
+        branah.keyboard.prototype.onSpace = function () {
+            if (!this.customOnSpace()) {
+                branah.util.insertAtCaret(this.nativeTextbox, "\u0020")
+            }
+        };
+        branah.keyboard.prototype.attr = function (a) {
+            if (a == "dir") {
+                return this.currentLayout.dir
+            } else {
+                if (a == "lang") {
+                    return this.currentLayout.lang
+                } else {
+                    if (a == "name") {
+                        return this.currentLayout.name
+                    }
+                }
+            } return ""
+        };
+        branah.keyboard.prototype.reset = function () {
+            this.shift = false;
+            this.caps = false;
+            this.alt = false;
+            this.ctrl = false;
+            this.counter = 0;
+            this.interval = 0;
+            this.prev = ""
+        };
+        branah.keyboard.prototype.stopRepeat = function () {
+            if (this.interval != 0) {
+                clearInterval(this.interval);
+                this.counter = 0; this.interval = 0
+            }
+        };
+        branah.keyboard.prototype.onKey = function (b) {
+            var a = branah.layout.parser.getKey(this.currentLayout.keys, b);
+            if (a) {
+                var d = branah.layout.parser.getState(this.ctrl, this.alt, this.shift, this.caps, a.c ? a.c : "0");
+                var e = a[d] ? a[d] : "";
+                if (this.prev != "") {
+                    var c = branah.layout.parser.getMappedValue(this.currentLayout.deadkeys, e, this.prev);
+                    if (c != "") {
+                        branah.util.insertAtCaret(this.nativeTextbox, c)
+                    } this.prev = ""
+                } else {
+                    if (branah.layout.parser.isDeadkey(this.currentLayout.deadkeys, e)) {
+                        this.prev = e
+                    } else {
+                        if (e != "") {
+                            if (!this.customOnKey(e)) {
+                                branah.util.insertAtCaret(this.nativeTextbox, e)
+                            }
+                        }
+                    }
+                }
+            }
+        };
+        branah.keyboard.prototype.drawKeyboard = function () {
+            if (!this.currentLayout.keys) {
+                return
+            }
+            var d, f, j, k;
+            var g = this.currentLayout.keys.length;
+            for (var e = 0; e < g; e++) {
+                f = this.currentLayout.keys[e];
+                if (!$("branah-" + f.i)) {
+                    continue
+                }
+                var c = this.ctrl;
+                var a = this.alt;
+                var h = this.shift;
+                var b = this.caps;
+                if (this.shiftOn) {
+                    h = true
+                }
+                if (this.capsOn) {
+                    b = true
+                }
+                if (this.altCtrlOn) {
+                    c = true;
+                    a = true
+                }
+                j = branah.layout.parser.getState(c, a, h, b, f.c ? f.c : "0"); k = f[j] ? f[j] : "";
+                if (this.prev != "") {
+                    k = branah.layout.parser.getMappedValue(this.currentLayout.deadkeys, k, this.prev)
+                } if (!h) {
+                    k = this.customDrawKeyboard(k);
+                    if (k == "") {
+                        k = "&nbsp;"
+                    }
+                    d = '<div class="branah-label-reference">' + branah.layout.parser.getKeyCode(this.defaultLayout.keys, 0, f.i) + '</div><div class="branah-label-natural" style="font-size:' + this.fontSize + 'px;">&nbsp;' + k + "</div>"
+                }
+                else {
+                    if (k == "") {
+                        k = "&nbsp;"
+                    }
+                    d = '<div class="branah-label-reference">' + branah.layout.parser.getKeyCode(this.defaultLayout.keys, 0, f.i) + '</div><div class="branah-label-shift" style="font-size:' + this.fontSize + 'px;">&nbsp;' + k + "</div>"
+                }
+                document.getElementById("branah-" + f.i).innerHTML = d
+            }
+            $("#branah-left-ctrl").removeClass();
+            $("#branah-right-ctrl").removeClass();
+            if (c) {
+                $("#branah-left-ctrl").addClass("branah-recessed" + (this.ctrl ? "" : "-hover"));
+                $("#branah-right-ctrl").addClass("branah-recessed" + (this.ctrl ? "" : "-hover"))
+            } $("#branah-left-alt").removeClass();
+            $("#branah-right-alt").removeClass();
+            if (a) {
+                $("#branah-left-alt").addClass("branah-recessed" + (this.alt ? "" : "-hover"));
+                $("#branah-right-alt").addClass("branah-recessed" + (this.alt ? "" : "-hover"))
+            } $("#branah-left-shift").removeClass();
+            $("#branah-right-shift").removeClass();
+            if (h) {
+                $("#branah-left-shift").addClass("branah-recessed" + (this.shift ? "" : "-hover"));
+                $("#branah-right-shift").addClass("branah-recessed" + (this.shift ? "" : "-hover"))
+            } $("#branah-caps-lock").removeClass();
+            if (b) { $("#branah-caps-lock").addClass("branah-recessed" + (this.caps ? "" : "-hover")) }
+        };
+        branah.keyboard.prototype.wireEvents = function () {
+            var a = this;
+            $("#branah-keyboard").delegate("button", "mousedown", function (b) {
+                var c = this.id; a.interval = setInterval(function () {
+                    a.counter++; if (a.counter > 5) {
+                        switch (c) {
+                            case "branah-backspace": a.onBackspace(); break;
+                            default: if (c.search("branah-k([0-9])|([1-3][0-9])|(4[0-7])") != -1) {
+                                a.onKey(c.substr(7));
+                                a.shift = false;
+                                a.alt = false;
+                                a.ctrl = false;
+                                a.drawKeyboard()
+                            } break
+                        }
+                    }
+                }, 50)
+            });
+            $("#branah-keyboard").delegate("button", "mouseup", function (b) {
+                a.stopRepeat()
+            });
+            $("#branah-keyboard").delegate("button", "mouseout", function (b) {
+                a.stopRepeat()
+            });
+            $("#branah-keyboard").delegate("button", "click", function (b) {
+                var c = this.id;
+                switch (c) {
+                    case "branah-left-shift": case "branah-right-shift": a.onShift(); break;
+                    case "branah-left-alt": case "branah-right-alt": a.onCtrl(); a.onAlt(); break;
+                    case "branah-left-ctrl": case "branah-right-ctrl": a.onAlt(); a.onCtrl(); break;
+                    case "branah-escape": a.onEsc(); break; case "branah-caps-lock": a.onCapsLock(); break;
+                    case "branah-backspace": a.onBackspace(); break; case "branah-enter": a.onEnter();
+                        break; case "branah-space": a.onSpace(); break;
+                    default: if (c.search("branah-k([0-9])|([1-3][0-9])|(4[0-7])") != -1) {
+                        a.onKey(c.substr(7));
+                        a.shift = false;
+                        a.alt = false;
+                        a.ctrl = false;
+                        a.drawKeyboard()
+                    } break
+                }
+            }); if (!("ontouchstart" in document.documentElement) || !branah.util.mobile) {
+                $("#branah-left-shift, #branah-right-shift").bind("mouseover", function (b) {
+                    a.shiftOn = true;
+                    a.drawKeyboard()
+                }); $("#branah-left-shift, #branah-right-shift").bind("mouseout", function (b) {
+                    a.shiftOn = false;
+                    a.drawKeyboard()
+                }); $("#branah-left-ctrl, #branah-right-ctrl").bind("mouseover", function (b) {
+                    a.altCtrlOn = true;
+                    a.drawKeyboard()
+                }); $("#branah-left-ctrl, #branah-right-ctrl").bind("mouseout", function (b) {
+                    a.altCtrlOn = false;
+                    a.drawKeyboard()
+                }); $("#branah-left-alt, #branah-right-alt").bind("mouseover", function (b) {
+                    a.altCtrlOn = true;
+                    a.drawKeyboard()
+                }); $("#branah-left-alt, #branah-right-alt").bind("mouseout", function (b) {
+                    a.altCtrlOn = false;
+                    a.drawKeyboard()
+                }); $("#branah-caps-lock").bind("mouseover", function (b) {
+                    a.capsOn = true;
+                    a.drawKeyboard()
+                });
+                $("#branah-caps-lock").bind("mouseout", function (b) {
+                    a.capsOn = false;
+                    a.drawKeyboard()
+                })
+            } a.textbox.bind("keydown", function (b) {
+                var d = branah.util.keyCode(b);
+                if ((d == 65 || d == 67 || d == 86 || d == 88 || d == 89 || d == 90) && (a.ctrl && !a.alt && !a.shift)) {
+                    return
+                } if (a.currentLayout == a.defaultLayout && d != 27) {
+                    return
+                } switch (d) {
+                    case 17: a.ctrl = false; a.onCtrl(); break;
+                    case 18: a.alt = false; a.onAlt(); break;
+                    case 16: a.shift = false; a.onShift(); break;
+                    case 27: a.onEsc(); break;
+                    case 8: a.onBackspace();
+                        b.preventDefault(); break;
+                    case 32: a.onSpace(); b.preventDefault(); break;
+                    case 10: a.onEnter(); b.preventDefault(); break;
+                    default: var c = branah.layout.parser.getKeyId(branah.util.keyCode(b));
+                        if (c != -1) {
+                            a.onKey("k" + c);
+                            a.drawKeyboard();
+                            b.preventDefault();
+                            a.cancelkeypress = true
+                        } break
+                }
+            });
+            if ($.browser.opera) {
+                a.textbox.bind("keypress", function (b) {
+                    if (a.cancelkeypress) {
+                        b.preventDefault();
+                        a.cancelkeypress = false
+                    }
+                })
+            } a.textbox.bind("keyup", function (b) {
+                switch (branah.util.keyCode(b)) {
+                    case 17: a.ctrl = true;
+                        a.onCtrl(); break;
+                    case 18: a.alt = true; a.onAlt();
+                        break; case 16: a.shift = true;
+                            a.onShift(); break;
+                    default: }
+            })
+        };
+        var keyboard = null;
+        $(document).ready(function () {
+            keyboard = new branah.keyboard("keyboard", "editor");
+            keyboard.fontSize = 22;
+            keyboard.loadVirtualLayout({ "name": "Arabic", "dir": "rtl", "keys": [{ "i": "k0", "c": "0", "n": "ذ", "s": "ّ" }, { "i": "k1", "c": "0", "n": "١", "s": "!" }, { "i": "k2", "c": "0", "n": "٢", "s": "@" }, { "i": "k3", "c": "0", "n": "٣", "s": "#" }, { "i": "k4", "c": "0", "n": "٤", "s": "$", "t": "¤" }, { "i": "k5", "c": "0", "n": "٥", "s": "%" }, { "i": "k6", "c": "0", "n": "٦", "s": "^" }, { "i": "k7", "c": "0", "n": "٧", "s": "&" }, { "i": "k8", "c": "0", "n": "٨", "s": "*" }, { "i": "k9", "c": "0", "n": "٩", "s": ")" }, { "i": "k10", "c": "0", "n": "٠", "s": "(" }, { "i": "k11", "c": "0", "n": "-", "s": "_" }, { "i": "k12", "c": "0", "n": "=", "s": "+" }, { "i": "k13", "c": "1", "n": "ض", "s": "َ" }, { "i": "k14", "c": "1", "n": "ص", "s": "ً" }, { "i": "k15", "c": "1", "n": "ث", "s": "ُ" }, { "i": "k16", "c": "1", "n": "ق", "s": "ٌ" }, { "i": "k17", "c": "1", "n": "ف", "s": "ﻹ" }, { "i": "k18", "c": "1", "n": "غ", "s": "إ" }, { "i": "k19", "c": "1", "n": "ع", "s": "’" }, { "i": "k20", "c": "1", "n": "ه", "s": "÷" }, { "i": "k21", "c": "1", "n": "خ", "s": "×" }, { "i": "k22", "c": "1", "n": "ح", "s": "؛" }, { "i": "k23", "c": "0", "n": "ج", "s": ">" }, { "i": "k24", "c": "0", "n": "د", "s": "<" }, { "i": "k25", "c": "0", "n": "\\", "s": "|" }, { "i": "k26", "c": "0", "n": "ش", "s": "ِ" }, { "i": "k27", "c": "1", "n": "س", "s": "ٍ" }, { "i": "k28", "c": "1", "n": "ي", "s": "]" }, { "i": "k29", "c": "1", "n": "ب", "s": "[" }, { "i": "k30", "c": "1", "n": "ل", "s": "لأ" }, { "i": "k31", "c": "1", "n": "ا", "s": "أ" }, { "i": "k32", "c": "1", "n": "ت", "s": "ـ" }, { "i": "k33", "c": "1", "n": "ن", "s": "،" }, { "i": "k34", "c": "1", "n": "م", "s": "/" }, { "i": "k35", "c": "1", "n": "ك", "s": ":" }, { "i": "k36", "c": "1", "n": "ط", "s": "\"" }, { "i": "k37", "c": "1", "n": "ئ", "s": "~" }, { "i": "k38", "c": "1", "n": "ء", "s": "ْ" }, { "i": "k39", "c": "1", "n": "ؤ", "s": "{" }, { "i": "k40", "c": "1", "n": "ر", "s": "}" }, { "i": "k41", "c": "1", "n": "لا", "s": "لآ" }, { "i": "k42", "c": "1", "n": "ى", "s": "آ" }, { "i": "k43", "c": "1", "n": "ة", "s": "‘" }, { "i": "k44", "c": "0", "n": "و", "s": "," }, { "i": "k45", "c": "0", "n": "ز", "s": "." }, { "i": "k46", "c": "0", "n": "ظ", "s": "؟" }, { "i": "k47", "c": "0", "n": "‍", "s": "‌" }], "deadkeys": [] });
+
+            $("#editor").attr("dir", keyboard.attr("dir"));
+            $("#editor").focus();
+
+            $("#editor").css({ "font-size": keyboard.fontSize + "px" });
+            $("#shrink").bind("click", function () {
+                if (keyboard.fontSize < 14) return;
+                keyboard.fontSize -= 2;
+                $("#editor, .branah-label-natural, .branah-label-shift").css({ "font-size": keyboard.fontSize + "px" });
+            });
+            $("#enlarge").bind("click", function () {
+                keyboard.fontSize += 2;
+                $("#editor, .branah-label-natural, .branah-label-shift").css({ "font-size": keyboard.fontSize + "px" });
+            });
+
+
+            $("#selectAll").bind("click", function () {
+
+                branah.util.setCaretPosition(textbox, 0, textbox.value.length);
+
+                ga("send", "event", "Keyboard", "click", "Select");
+            });
+
+            var localStorageSupported = false;
+            try {
+                var item = 'item';
+                localStorage.setItem(item, item);
+                localStorage.removeItem(item);
+                localStorageSupported = true;
+            } catch (e) { };
+
+            var jsonSupported = false;
+            try {
+                var obj = JSON.parse(JSON.stringify({ item: 'item' }));
+                if (obj.item == 'item') jsonSupported = true;
+            }
+            catch (e) { };
+
+            if (localStorageSupported && jsonSupported) {
+                if (localStorage.getItem("arabic") == null) {
+                    localStorage.setItem("arabic", JSON.stringify({ undo: [], redo: [] }));
+                }
+                else {
+                    $("#editor").val(JSON.parse(localStorage.getItem("arabic")).undo.pop());
+                }
+
+                $("#clearAll").bind("click", function () {
+
+                    ga("send", "event", "Keyboard", "click", "Clear");
+                    localStorage.setItem("arabic", JSON.stringify({ undo: [], redo: [] }));
+                    $("#editor").val("");
+                });
+
+                $("#undo").bind("click", function () {
+
+                    var obj = JSON.parse(localStorage.getItem("arabic"));
+
+                    if (obj.undo.length == 0) return;
+
+                    var item = obj.undo.pop();
+                    if (item != $("#editor").val()) {
+
+                        obj.redo.push($("#editor").val());
+                        $("#editor").val(item);
+                    }
+                    else {
+                        $("#editor").val(obj.undo.length == 0 ? "" : obj.undo[obj.undo.length - 1]);
+                        obj.redo.push(item);
+                    }
+                    localStorage.setItem("arabic", JSON.stringify(obj));
+                });
+
+                $("#redo").bind("click", function () {
+
+                    var obj = JSON.parse(localStorage.getItem("arabic"));
+
+                    if (obj.redo.length == 0) return;
+
+                    var item = obj.redo.pop();
+                    $("#editor").val(item);
+                    obj.undo.push(item);
+
+                    localStorage.setItem("arabic", JSON.stringify(obj));
+                });
+
+                setInterval(function () {
+
+                    var obj = JSON.parse(localStorage.getItem("arabic"));
+
+                    var item = $("#editor").val();
+
+                    if (obj.undo.length == 0 && item.length == 0) return;
+
+                    if (obj.undo.length == 0 || item != obj.undo[obj.undo.length - 1]) {
+                        obj.undo.push(item);
+
+                        localStorage.setItem("arabic", JSON.stringify(obj));
+                    }
+                }, 3000);
+            }
+            else {
+                $("#undo").hide();
+                $("#redo").hide();
+                $("#clearAll").hide();
+            }
+
+        });
+    </script>-->
+
+
+</body>
+</html>
