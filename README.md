@@ -1,5 +1,5 @@
 # quran-reader
-Back in 2016, had a vision to create a editor, which help to create a quran text with embeded "Tajweed" (good recitation) rules, using colors which is a common technique found in many quranic copies.
+Back in 2016, had a vision to create a editor, which help to create a arabic text with embeded "Tajweed" (good recitation) rules, using colors which is a common technique found in many quranic copies.
 
 Using following editor, a digital tajweedi quranic text could be generated. That was the vision.
 
